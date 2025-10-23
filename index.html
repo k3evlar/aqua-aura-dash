@@ -5,23 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Smart Plant Watering System</title>
     <meta name="description" content="Monitor and control your plant's health in real-time with ESP32-based IoT dashboard" />
-    <meta name="author" content="Lovable" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <meta property="og:title" content="4a85630f-5010-4026-88b5-e00b75d69c6f" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <link rel="stylesheet" href="/styles.css">
   </head>
-
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Animated water droplet decorations -->
+    <div class="droplet-decoration droplet-1">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+      </svg>
+    </div>
+    <div class="droplet-decoration droplet-2">
+      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+      </svg>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <h1 class="title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+          Smart Plant Watering System
+        </h1>
+        <p class="subtitle">Monitor and control your plant's health in real-time</p>
+      </header>
+
+      <!-- Main Dashboard Card -->
+      <div class="glass-card">
+        <!-- Moisture Display -->
+        <div class="moisture-display">
+          <div class="moisture-value-container">
+            <span id="moistureValue" class="moisture-value">72</span>
+            <span class="moisture-unit">%</span>
+          </div>
+          <p class="moisture-label">Soil Moisture Level</p>
+          
+          <div class="progress-container">
+            <div class="progress-bg"></div>
+            <div id="moistureProgress" class="progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- Pump Status -->
+        <div class="pump-status">
+          <div class="pump-indicator-wrapper">
+            <div id="pumpIndicator" class="pump-indicator">
+              <div class="pump-indicator-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                </svg>
+              </div>
+            </div>
+            <div id="pumpPing" class="pump-ping"></div>
+          </div>
+          <div class="pump-status-text">
+            <p class="pump-label">Pump Status</p>
+            <p id="pumpStatusText" class="pump-value">OFF</p>
+          </div>
+        </div>
+
+        <!-- Auto Mode Toggle -->
+        <div class="auto-mode-section">
+          <span class="auto-mode-label">Auto Mode</span>
+          <label class="switch">
+            <input type="checkbox" id="autoModeToggle">
+            <span class="slider"></span>
+          </label>
+          <span id="autoModeStatus" class="auto-mode-status">Disabled</span>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="control-buttons">
+          <button id="startPumpBtn" class="btn btn-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+            Start Pump
+          </button>
+          <button id="stopPumpBtn" class="btn btn-danger" disabled>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="6" width="12" height="12" rx="1"/>
+            </svg>
+            Stop Pump
+          </button>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="wifi-icon">
+            <path d="M5 13a10 10 0 0 1 14 0"></path>
+            <path d="M8.5 16.5a5 5 0 0 1 7 0"></path>
+            <path d="M2 8.82a15 15 0 0 1 20 0"></path>
+            <line x1="12" y1="20" x2="12.01" y2="20"></line>
+          </svg>
+          <span>Wi-Fi Connected</span>
+        </div>
+        <div class="status-item status-time">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Last Update: <span id="currentTime">00:00:00</span></span>
+        </div>
+      </div>
+    </div>
+
+    <script src="/script.js"></script>
   </body>
 </html>
