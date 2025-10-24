@@ -6,10 +6,13 @@ import { PumpStatus } from "@/components/PumpStatus";
 import { Droplets, Wifi, Clock } from "lucide-react";
 
 const Index = () => {
-  const [moistureLevel, setMoistureLevel] = useState(72);
+  const [moistureLevel, setMoistureLevel] = useState(0);
   const [pumpOn, setPumpOn] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+  const ESP32_LOCAL = import.meta.env.VITE_ESP32_API_URL;
+  const ESP32_NGROK = import.meta.env.VITE_ESP32_NGROK_URL;
 
   // Update time every second
   useEffect(() => {
@@ -19,38 +22,62 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate moisture level changes
+  // Fetch data from ESP32 every 3 seconds (local + Ngrok fallback)
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMoistureLevel(prev => {
-        const change = pumpOn ? 2 : -1;
-        const newValue = prev + change;
-        return Math.max(0, Math.min(100, newValue));
-      });
-    }, 3000);
+    const fetchData = async () => {
+      try {
+        let response = await fetch(`${ESP32_LOCAL}/data`);
+        if (!response.ok) throw new Error("Local ESP32 unreachable");
+        const data = await response.json();
+        setMoistureLevel(data.moisture);
+        setPumpOn(data.pump === 1);
+      } catch {
+        try {
+          let response = await fetch(`${ESP32_NGROK}/data`);
+          const data = await response.json();
+          setMoistureLevel(data.moisture);
+          setPumpOn(data.pump === 1);
+        } catch (err) {
+          console.error("Failed to fetch from ESP32 or Ngrok", err);
+        }
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
-  }, [pumpOn]);
+  }, [ESP32_LOCAL, ESP32_NGROK]);
 
   // Auto mode logic
   useEffect(() => {
-    if (autoMode && moistureLevel < 40) {
-      setPumpOn(true);
-    } else if (autoMode && moistureLevel > 70) {
-      setPumpOn(false);
-    }
+    if (autoMode && moistureLevel < 40) setPumpOn(true);
+    else if (autoMode && moistureLevel > 70) setPumpOn(false);
   }, [autoMode, moistureLevel]);
 
-  const handleStartPump = () => {
-    setPumpOn(true);
+  // Pump controls
+  const handleStartPump = async () => {
+    try {
+      await fetch(`${ESP32_LOCAL}/pump/start`, { method: 'GET' });
+      setPumpOn(true);
+    } catch {
+      await fetch(`${ESP32_NGROK}/pump/start`, { method: 'GET' });
+      setPumpOn(true);
+    }
   };
 
-  const handleStopPump = () => {
-    setPumpOn(false);
+  const handleStopPump = async () => {
+    try {
+      await fetch(`${ESP32_LOCAL}/pump/stop`, { method: 'GET' });
+      setPumpOn(false);
+    } catch {
+      await fetch(`${ESP32_NGROK}/pump/stop`, { method: 'GET' });
+      setPumpOn(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Animated water droplet decoration */}
+      {/* Animated droplets */}
       <div className="absolute top-20 left-1/4 animate-float opacity-20">
         <Droplets className="w-12 h-12 text-accent" />
       </div>
@@ -58,7 +85,6 @@ const Index = () => {
         <Droplets className="w-16 h-16 text-secondary" />
       </div>
 
-      {/* Main Container */}
       <div className="w-full max-w-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2 mb-8">
@@ -71,12 +97,9 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Main Dashboard Card */}
+        {/* Dashboard Card */}
         <div className="glass-card rounded-3xl p-8 space-y-6 animate-fade-in">
-          {/* Moisture Display */}
           <MoistureDisplay value={moistureLevel} />
-
-          {/* Pump Status */}
           <div className="border-t border-border/50 pt-6">
             <PumpStatus isOn={pumpOn} />
           </div>
@@ -113,12 +136,7 @@ const Index = () => {
               disabled={!pumpOn}
               className="w-full text-base font-semibold py-6"
             >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                viewBox="0 0 24 24" 
-                fill="currentColor"
-                className="w-5 h-5"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <rect x="6" y="6" width="12" height="12" rx="1"/>
               </svg>
               Stop Pump
